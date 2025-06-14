@@ -23,4 +23,9 @@ router.put('/suppliers/:id/activate', adminController.activateSupplier);
 router.put('/suppliers/:id/deactivate', adminController.deactivateSupplier);
 router.get('/suppliers/:id', adminController.getSupplierDetails);
 
+//admin profile
+router.get('/:id', adminController.getAdminProfile);
+router.put('/:id', adminController.updateAdminProfile);
+router.put('/:id/change-password', adminController.changeAdminPassword);
+
 module.exports = router;

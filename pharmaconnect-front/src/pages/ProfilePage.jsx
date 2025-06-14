@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { User, Mail, Phone, MapPin, Lock, Edit, Save, X } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 
 export default function ProfilePage() {
-  const { user, updateProfile } = useAuth();
+  const adminId = 1; // Remplace avec l'ID dynamique si nécessaire
+
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -12,24 +13,34 @@ export default function ProfilePage() {
     phone: '',
     address: '',
   });
+
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
+
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        address: user.address || '',
-      });
-    }
-  }, [user]);
+    const fetchAdmin = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/admin/${adminId}`);
+        const admin = res.data;
+        setFormData({
+          name: admin.full_name || '',
+          email: admin.email || '',
+          phone: admin.phone || '',
+          address: admin.address || '',
+        });
+      } catch (err) {
+        console.error('Erreur chargement profil admin :', err);
+      }
+    };
+
+    fetchAdmin();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -43,14 +54,13 @@ export default function ProfilePage() {
 
   const validateForm = () => {
     const newErrors = {};
-    
     if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
+
     if (isEditing && passwordData.newPassword) {
       if (!passwordData.currentPassword) {
         newErrors.currentPassword = 'Current password is required';
@@ -62,7 +72,7 @@ export default function ProfilePage() {
         newErrors.confirmPassword = 'Passwords do not match';
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -72,24 +82,32 @@ export default function ProfilePage() {
     if (!validateForm()) return;
 
     try {
-      const updateData = { ...formData };
+      await axios.put(`http://localhost:5000/api/admin/${adminId}`, {
+        full_name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address
+      });
+
       if (passwordData.newPassword) {
-        updateData.currentPassword = passwordData.currentPassword;
-        updateData.newPassword = passwordData.newPassword;
+        await axios.put(`http://localhost:5000/api/admin/${adminId}/change-password`, {
+          old_password: passwordData.currentPassword,
+          new_password: passwordData.newPassword
+        });
       }
 
-      await updateProfile(updateData);
-      setSuccessMessage('Profile updated successfully!');
+      setSuccessMessage('✅ Profil mis à jour avec succès');
       setIsEditing(false);
       setPasswordData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
-      
+
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      setErrors({ submit: error.message });
+      console.error(error);
+      setErrors({ submit: error.response?.data?.error || '❌ Erreur lors de la mise à jour' });
     }
   };
 
@@ -100,15 +118,10 @@ export default function ProfilePage() {
           <User className="h-6 w-6" />
           My Profile
         </h1>
-        
+
         {!isEditing ? (
-          <Button
-            variant="outline"
-            onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2"
-          >
-            <Edit size={16} />
-            Edit Profile
+          <Button variant="outline" onClick={() => setIsEditing(true)} className="flex items-center gap-2">
+            <Edit size={16} /> Edit Profile
           </Button>
         ) : (
           <div className="flex gap-2">
@@ -117,176 +130,40 @@ export default function ProfilePage() {
               onClick={() => {
                 setIsEditing(false);
                 setErrors({});
-                setPasswordData({
-                  currentPassword: '',
-                  newPassword: '',
-                  confirmPassword: '',
-                });
+                setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
               }}
               className="flex items-center gap-2"
             >
-              <X size={16} />
-              Cancel
+              <X size={16} /> Cancel
             </Button>
-            <Button
-              onClick={handleSubmit}
-              className="flex items-center gap-2"
-            >
-              <Save size={16} />
-              Save Changes
+            <Button onClick={handleSubmit} className="flex items-center gap-2">
+              <Save size={16} /> Save Changes
             </Button>
           </div>
         )}
       </div>
 
-      {successMessage && (
-        <div className="mb-6 p-3 bg-green-50 text-green-700 rounded-md">
-          {successMessage}
-        </div>
-      )}
-
-      {errors.submit && (
-        <div className="mb-6 p-3 bg-red-50 text-red-700 rounded-md">
-          {errors.submit}
-        </div>
-      )}
+      {successMessage && <div className="mb-6 p-3 bg-green-50 text-green-700 rounded-md">{successMessage}</div>}
+      {errors.submit && <div className="mb-6 p-3 bg-red-50 text-red-700 rounded-md">{errors.submit}</div>}
 
       <div className="bg-white rounded-lg shadow-md p-6">
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="space-y-1">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <User size={16} />
-                Full Name
-              </label>
-              {isEditing ? (
-                <>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className={`w-full p-2 border rounded-md ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  {errors.name && <p className="text-red-500 text-xs">{errors.name}</p>}
-                </>
-              ) : (
-                <p className="p-2 text-gray-900">{formData.name}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Mail size={16} />
-                Email Address
-              </label>
-              {isEditing ? (
-                <>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className={`w-full p-2 border rounded-md ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
-                </>
-              ) : (
-                <p className="p-2 text-gray-900">{formData.email}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <Phone size={16} />
-                Phone Number
-              </label>
-              {isEditing ? (
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-              ) : (
-                <p className="p-2 text-gray-900">{formData.phone || 'Not provided'}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <MapPin size={16} />
-                Address
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-              ) : (
-                <p className="p-2 text-gray-900">{formData.address || 'Not provided'}</p>
-              )}
-            </div>
+            <InputField label="Full Name" name="name" icon={<User size={16} />} value={formData.name} error={errors.name} onChange={handleInputChange} disabled={!isEditing} />
+            <InputField label="Email Address" name="email" icon={<Mail size={16} />} value={formData.email} error={errors.email} onChange={handleInputChange} disabled={!isEditing} />
+            <InputField label="Phone Number" name="phone" icon={<Phone size={16} />} value={formData.phone} onChange={handleInputChange} disabled={!isEditing} />
+            <InputField label="Address" name="address" icon={<MapPin size={16} />} value={formData.address} onChange={handleInputChange} disabled={!isEditing} />
           </div>
 
           {isEditing && (
             <div className="border-t pt-6">
               <h3 className="flex items-center gap-2 text-lg font-semibold mb-4">
-                <Lock size={18} />
-                Change Password
+                <Lock size={18} /> Change Password
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    name="currentPassword"
-                    value={passwordData.currentPassword}
-                    onChange={handlePasswordChange}
-                    className={`w-full p-2 border rounded-md ${errors.currentPassword ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  {errors.currentPassword && (
-                    <p className="text-red-500 text-xs">{errors.currentPassword}</p>
-                  )}
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    name="newPassword"
-                    value={passwordData.newPassword}
-                    onChange={handlePasswordChange}
-                    className={`w-full p-2 border rounded-md ${errors.newPassword ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  {errors.newPassword && (
-                    <p className="text-red-500 text-xs">{errors.newPassword}</p>
-                  )}
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Confirm New Password
-                  </label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={passwordData.confirmPassword}
-                    onChange={handlePasswordChange}
-                    className={`w-full p-2 border rounded-md ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  {errors.confirmPassword && (
-                    <p className="text-red-500 text-xs">{errors.confirmPassword}</p>
-                  )}
-                </div>
+                <PasswordField label="Current Password" name="currentPassword" value={passwordData.currentPassword} error={errors.currentPassword} onChange={handlePasswordChange} />
+                <PasswordField label="New Password" name="newPassword" value={passwordData.newPassword} error={errors.newPassword} onChange={handlePasswordChange} />
+                <PasswordField label="Confirm New Password" name="confirmPassword" value={passwordData.confirmPassword} error={errors.confirmPassword} onChange={handlePasswordChange} />
               </div>
             </div>
           )}
@@ -295,3 +172,37 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+const InputField = ({ label, name, icon, value, onChange, error, disabled }) => (
+  <div className="space-y-1">
+    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">{icon}{label}</label>
+    {disabled ? (
+      <p className="p-2 text-gray-900">{value || 'Not provided'}</p>
+    ) : (
+      <>
+        <input
+          type="text"
+          name={name}
+          value={value}
+          onChange={onChange}
+          className={`w-full p-2 border rounded-md ${error ? 'border-red-500' : 'border-gray-300'}`}
+        />
+        {error && <p className="text-red-500 text-xs">{error}</p>}
+      </>
+    )}
+  </div>
+);
+
+const PasswordField = ({ label, name, value, onChange, error }) => (
+  <div className="space-y-1">
+    <label className="block text-sm font-medium text-gray-700">{label}</label>
+    <input
+      type="password"
+      name={name}
+      value={value}
+      onChange={onChange}
+      className={`w-full p-2 border rounded-md ${error ? 'border-red-500' : 'border-gray-300'}`}
+    />
+    {error && <p className="text-red-500 text-xs">{error}</p>}
+  </div>
+);

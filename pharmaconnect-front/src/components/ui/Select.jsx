@@ -45,15 +45,16 @@ const Select = forwardRef(({
         aria-describedby={error ? `${selectId}-error` : helperText ? `${selectId}-description` : undefined}
         {...props}
       >
-        {options.map(option => (
-          <option 
-            key={option.value} 
-            value={option.value}
-            disabled={option.disabled}
-          >
-            {option.label}
-          </option>
-        ))}
+       {Array.isArray(options) && options.map(option => (
+  <option 
+    key={option.value} 
+    value={option.value}
+    disabled={option.disabled}
+  >
+    {option.label}
+  </option>
+))}
+
       </select>
       {helperText && !error && (
         <p className="mt-1 text-sm text-gray-500" id={`${selectId}-description`}>

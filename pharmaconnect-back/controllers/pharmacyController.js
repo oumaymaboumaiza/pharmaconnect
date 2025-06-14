@@ -55,3 +55,26 @@ exports.changePassword = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Add to pharmacyController.js
+exports.toggleStatus = async (req, res) => {
+  try {
+    const { active } = req.body;
+    const id = req.params.id;
+
+    const [pharmacy] = await db.execute('SELECT id_pharmacie FROM pharmacie WHERE id_pharmacie = ?', [id]);
+    if (pharmacy.length === 0) {
+      return res.status(404).json({ error: 'Pharmacie non trouvée' });
+    }
+
+    await db.execute('UPDATE pharmacie SET is_active = ? WHERE id_pharmacie = ?', [active ? 1 : 0, id]);
+    
+    const [updatedPharmacy] = await db.execute(
+      'SELECT id_pharmacie, nom_pharmacie, email, telephone, president_pharmacie, is_active FROM pharmacie WHERE id_pharmacie = ?',
+      [id]
+    );
+    res.json({ pharmacy: updatedPharmacy[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

@@ -4,9 +4,14 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/api': 'http://localhost:5000',
+    }
+  },
   resolve: {
     alias: {
-      'hooks': path.resolve(__dirname, './src/hooks'), // Exemple d'alias personnalisé
+      'hooks': path.resolve(__dirname, './src/hooks'),
     },
   },
 });

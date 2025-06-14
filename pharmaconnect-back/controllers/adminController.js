@@ -62,6 +62,47 @@ exports.getPharmacyDetails = async (req, res) => {
   }
 };
 
+
+// GET admin profile
+exports.getAdminProfile = async (req, res) => {
+  try {
+    const [rows] = await db.execute('SELECT id, full_name, email, phone, address FROM admin WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Admin non trouvé' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// PUT update profile
+exports.updateAdminProfile = async (req, res) => {
+  try {
+    const { full_name, email, phone, address } = req.body;
+    await db.execute('UPDATE admin SET full_name = ?, email = ?, phone = ?, address = ? WHERE id = ?', [full_name, email, phone, address, req.params.id]);
+    res.json({ message: 'Profil mis à jour avec succès' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// PUT change password
+exports.changeAdminPassword = async (req, res) => {
+  try {
+    const { old_password, new_password } = req.body;
+    const [rows] = await db.execute('SELECT mot_de_passe FROM admin WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Admin non trouvé' });
+
+    const isMatch = await bcrypt.compare(old_password, rows[0].mot_de_passe);
+    if (!isMatch) return res.status(400).json({ error: 'Ancien mot de passe incorrect' });
+
+    const hashed = await bcrypt.hash(new_password, 10);
+    await db.execute('UPDATE admin SET mot_de_passe = ? WHERE id = ?', [hashed, req.params.id]);
+    res.json({ message: 'Mot de passe mis à jour' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // autres fonctions placeholders (doctors/suppliers)
 exports.addDoctor = (req, res) => res.send('Add doctor (not implemented)');
 exports.deleteDoctor = (req, res) => res.send('Delete doctor (not implemented)');
@@ -72,3 +113,4 @@ exports.deleteSupplier = (req, res) => res.send('Delete supplier (not implemente
 exports.activateSupplier = (req, res) => res.send('Activate supplier (not implemented)');
 exports.deactivateSupplier = (req, res) => res.send('Deactivate supplier (not implemented)');
 exports.getSupplierDetails = (req, res) => res.send('Get supplier details (not implemented)');
+

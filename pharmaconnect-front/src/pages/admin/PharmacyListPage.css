@@ -1,0 +1,50 @@
+/* Structure verticale principale */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Conteneur de la liste horizontale */
+.pharmacy-list-container {
+  margin-top: 1.5rem;
+}
+
+/* Grille horizontale avec défilement */
+.pharmacy-grid {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  gap: 1.5rem;
+  padding-bottom: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: #1F35FF #f1f5f9;
+}
+
+/* Style de la scrollbar */
+.pharmacy-grid::-webkit-scrollbar {
+  height: 6px;
+}
+
+.pharmacy-grid::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.pharmacy-grid::-webkit-scrollbar-thumb {
+  background-color: #1F35FF;
+  border-radius: 3px;
+}
+
+/* Carte pharmacie (dimensions fixes) */
+.pharmacy-card {
+  min-width: 280px;
+  flex-shrink: 0;
+  /* Conservez vos autres styles existants */
+}
+body {
+  margin: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
