@@ -6,6 +6,7 @@ const pharmacyRoutes = require('./routes/pharmacyRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
 const userRoutes = require('./routes/userRoutes');
+const ordonnanceRoutes = require('./routes/ordonnanceRoutes');
 
 
 
@@ -22,6 +23,7 @@ app.use('/api/admin', adminRoutes); // ✅ routes admin
 app.use('/api/pharmacy', pharmacyRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/suppliers', supplierRoutes);
+app.use('/api/ordonnances', ordonnanceRoutes); 
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

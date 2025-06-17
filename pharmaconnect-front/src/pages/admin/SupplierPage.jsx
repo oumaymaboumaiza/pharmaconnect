@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [newSupplier, setNewSupplier] = useState({
-    nom: '',
-    prenom: '',
-    email: '',
-    password: '',
-    telephone: ''
+    nom: "",
+    prenom: "",
+    email: "",
+    password: "",
+    telephone: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchSuppliers();
@@ -19,53 +19,67 @@ export default function SuppliersPage() {
 
   const fetchSuppliers = async () => {
     try {
-      const res = await fetch('/api/suppliers');
-      if (!res.ok) throw new Error('Erreur de chargement');
+      const res = await fetch("/api/admin/suppliers"); // ✅ CORRIGÉ: URL mise à jour
+      if (!res.ok) throw new Error("Erreur de chargement");
       const data = await res.json();
-      setSuppliers(data);
+      setSuppliers(Array.isArray(data) ? data : []); // ✅ CORRIGÉ: Protection array
     } catch (err) {
       setError(err.message);
+      setSuppliers([]); // ✅ CORRIGÉ: Fallback array vide
     }
   };
 
   const handleAdd = async () => {
     // Validation des champs
-    if (!newSupplier.nom || !newSupplier.prenom || !newSupplier.email || !newSupplier.password || !newSupplier.telephone) {
-      setError('Tous les champs sont obligatoires');
+    if (
+      !newSupplier.nom ||
+      !newSupplier.prenom ||
+      !newSupplier.email ||
+      !newSupplier.password ||
+      !newSupplier.telephone
+    ) {
+      setError("Tous les champs sont obligatoires");
       return;
     }
 
-    if (!/^[0-9]{10}$/.test(newSupplier.telephone)) {
-      setError('Le numéro doit contenir 10 chiffres');
+    if (!/^[0-9]{8,}$/.test(newSupplier.telephone)) {
+      setError("Le numéro doit contenir au moins 8 chiffres");
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newSupplier.email)) {
-      setError('Email invalide');
+      setError("Email invalide");
       return;
     }
 
     if (newSupplier.password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères');
+      setError("Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
 
     setLoading(true);
     try {
-      const res = await fetch('/api/suppliers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/admin/suppliers", {
+        // ✅ CORRIGÉ: URL mise à jour
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newSupplier),
       });
-      
+
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || 'Erreur lors de l\'ajout');
+        throw new Error(errorData.error || "Erreur lors de l'ajout");
       }
 
       // Réinitialiser le formulaire après l'ajout
-      setNewSupplier({ nom: '', prenom: '', email: '', password: '', telephone: '' });
-      setError('');
+      setNewSupplier({
+        nom: "",
+        prenom: "",
+        email: "",
+        password: "",
+        telephone: "",
+      });
+      setError("");
       await fetchSuppliers();
     } catch (err) {
       setError(err.message);
@@ -75,12 +89,15 @@ export default function SuppliersPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce fournisseur ?')) return;
-    
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce fournisseur ?"))
+      return;
+
     setLoading(true);
     try {
-      const res = await fetch(`/api/suppliers/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Erreur de suppression');
+      const res = await fetch(`/api/admin/suppliers/${id}`, {
+        method: "DELETE",
+      }); // ✅ CORRIGÉ: URL mise à jour
+      if (!res.ok) throw new Error("Erreur de suppression");
       await fetchSuppliers();
     } catch (err) {
       setError(err.message);
@@ -92,13 +109,14 @@ export default function SuppliersPage() {
   const toggleStatus = async (id, currentStatus) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/suppliers/${id}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ active: !currentStatus })
+      const res = await fetch(`/api/admin/suppliers/${id}/status`, {
+        // ✅ CORRIGÉ: URL mise à jour
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: !currentStatus }),
       });
-      
-      if (!res.ok) throw new Error('Erreur de changement de statut');
+
+      if (!res.ok) throw new Error("Erreur de changement de statut");
       await fetchSuppliers();
     } catch (err) {
       setError(err.message);
@@ -112,9 +130,7 @@ export default function SuppliersPage() {
       <h2 className="text-2xl font-bold mb-6">Gestion des Fournisseurs</h2>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-          {error}
-        </div>
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
       )}
 
       {/* Add Supplier Form */}
@@ -124,14 +140,18 @@ export default function SuppliersPage() {
           <input
             placeholder="Nom *"
             value={newSupplier.nom}
-            onChange={(e) => setNewSupplier({...newSupplier, nom: e.target.value})}
+            onChange={(e) =>
+              setNewSupplier({ ...newSupplier, nom: e.target.value })
+            }
             className="p-2 border rounded"
             required
           />
           <input
             placeholder="Prénom *"
             value={newSupplier.prenom}
-            onChange={(e) => setNewSupplier({...newSupplier, prenom: e.target.value})}
+            onChange={(e) =>
+              setNewSupplier({ ...newSupplier, prenom: e.target.value })
+            }
             className="p-2 border rounded"
             required
           />
@@ -139,7 +159,9 @@ export default function SuppliersPage() {
             placeholder="Email *"
             type="email"
             value={newSupplier.email}
-            onChange={(e) => setNewSupplier({...newSupplier, email: e.target.value})}
+            onChange={(e) =>
+              setNewSupplier({ ...newSupplier, email: e.target.value })
+            }
             className="p-2 border rounded"
             required
           />
@@ -147,7 +169,9 @@ export default function SuppliersPage() {
             placeholder="Mot de passe *"
             type="password"
             value={newSupplier.password}
-            onChange={(e) => setNewSupplier({...newSupplier, password: e.target.value})}
+            onChange={(e) =>
+              setNewSupplier({ ...newSupplier, password: e.target.value })
+            }
             className="p-2 border rounded"
             required
             minLength="6"
@@ -155,9 +179,10 @@ export default function SuppliersPage() {
           <input
             placeholder="Téléphone *"
             value={newSupplier.telephone}
-            onChange={(e) => setNewSupplier({...newSupplier, telephone: e.target.value})}
+            onChange={(e) =>
+              setNewSupplier({ ...newSupplier, telephone: e.target.value })
+            }
             className="p-2 border rounded"
-            maxLength="10"
             required
           />
           <button
@@ -165,7 +190,7 @@ export default function SuppliersPage() {
             disabled={loading}
             className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
           >
-            {loading ? 'En cours...' : 'Ajouter'}
+            {loading ? "En cours..." : "Ajouter"}
           </button>
         </div>
       </div>
@@ -184,49 +209,62 @@ export default function SuppliersPage() {
             </tr>
           </thead>
           <tbody>
-            {suppliers.map((supplier) => (
-              <tr key={supplier.id} className="border-t hover:bg-gray-50">
-                <td className="py-3 px-4">{supplier.nom}</td>
-                <td className="py-3 px-4">{supplier.prenom}</td>
-                <td className="py-3 px-4">{supplier.email}</td>
-                <td className="py-3 px-4">{supplier.telephone}</td>
-                <td className="py-3 px-4">
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    supplier.is_active 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {supplier.is_active ? 'Actif' : 'Inactif'}
-                  </span>
-                </td>
-                <td className="py-3 px-4 space-x-2">
-                  <button
-                    onClick={() => setSelectedSupplier(supplier)}
-                    className="text-blue-600 hover:underline"
-                  >
-                    Détails
-                  </button>
-                  <button
-                    onClick={() => toggleStatus(supplier.id, supplier.is_active)}
-                    disabled={loading}
-                    className={`${
-                      supplier.is_active 
-                        ? 'text-yellow-600' 
-                        : 'text-green-600'
-                    } hover:underline`}
-                  >
-                    {supplier.is_active ? 'Désactiver' : 'Activer'}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(supplier.id)}
-                    disabled={loading}
-                    className="text-red-600 hover:underline"
-                  >
-                    Supprimer
-                  </button>
+            {/* ✅ CORRIGÉ: Protection contre l'erreur .map */}
+            {Array.isArray(suppliers) && suppliers.length > 0 ? (
+              suppliers.map((supplier) => (
+                <tr key={supplier.id} className="border-t hover:bg-gray-50">
+                  <td className="py-3 px-4">{supplier.nom}</td>
+                  <td className="py-3 px-4">{supplier.prenom}</td>
+                  <td className="py-3 px-4">{supplier.email}</td>
+                  <td className="py-3 px-4">{supplier.telephone}</td>
+                  <td className="py-3 px-4">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        supplier.is_active
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {supplier.is_active ? "Actif" : "Inactif"}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 space-x-2">
+                    <button
+                      onClick={() => setSelectedSupplier(supplier)}
+                      className="text-blue-600 hover:underline"
+                    >
+                      Détails
+                    </button>
+                    <button
+                      onClick={() =>
+                        toggleStatus(supplier.id, supplier.is_active)
+                      }
+                      disabled={loading}
+                      className={`${
+                        supplier.is_active
+                          ? "text-yellow-600"
+                          : "text-green-600"
+                      } hover:underline`}
+                    >
+                      {supplier.is_active ? "Désactiver" : "Activer"}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(supplier.id)}
+                      disabled={loading}
+                      className="text-red-600 hover:underline"
+                    >
+                      Supprimer
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6" className="py-8 px-4 text-center text-gray-500">
+                  {loading ? "Chargement..." : "Aucun fournisseur trouvé"}
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -237,18 +275,32 @@ export default function SuppliersPage() {
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3 className="text-xl font-bold mb-4">Détails du Fournisseur</h3>
             <div className="space-y-3">
-              <p><span className="font-semibold">Nom:</span> {selectedSupplier.nom}</p>
-              <p><span className="font-semibold">Prénom:</span> {selectedSupplier.prenom}</p>
-              <p><span className="font-semibold">Email:</span> {selectedSupplier.email}</p>
-              <p><span className="font-semibold">Téléphone:</span> {selectedSupplier.telephone}</p>
               <p>
-                <span className="font-semibold">Statut:</span> 
-                <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
-                  selectedSupplier.is_active 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {selectedSupplier.is_active ? 'Actif' : 'Inactif'}
+                <span className="font-semibold">Nom:</span>{" "}
+                {selectedSupplier.nom}
+              </p>
+              <p>
+                <span className="font-semibold">Prénom:</span>{" "}
+                {selectedSupplier.prenom}
+              </p>
+              <p>
+                <span className="font-semibold">Email:</span>{" "}
+                {selectedSupplier.email}
+              </p>
+              <p>
+                <span className="font-semibold">Téléphone:</span>{" "}
+                {selectedSupplier.telephone}
+              </p>
+              <p>
+                <span className="font-semibold">Statut:</span>
+                <span
+                  className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                    selectedSupplier.is_active
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {selectedSupplier.is_active ? "Actif" : "Inactif"}
                 </span>
               </p>
             </div>

@@ -19,7 +19,12 @@ import OrdonnancesPage from './pages/pharmacist/OrdonnancesPage';
 import StocksPage from './pages/pharmacist/StocksPage';
 import PharmacistSupplierPage from './pages/pharmacist/PharmacistSupplierPage';
 
+// Pages Docteur
+import NewPrescription from "./pages/doctor/NewPrescription"; // Création de nouveaux patients par le docteur
+
 // Pages Fournisseur
+import PharmaciesListPage from './pages/supplier/PharmaciesListPage'; 
+
 // import SupplierMainPage from './components/layout/SupplierMainPage'; // Supprimé
 
 // Pages Docteur
@@ -37,8 +42,8 @@ import DoctorLayout from './components/layout/DoctorLayout';
 import MainLayout from './components/layout/MainLayout';
 
 // Importation des nouvelles pages
-import NewPatientPage from './pages/doctor/NewPatientPage'; 
-import PharmaciesListPage from './pages/supplier/PharmaciesListPage'; 
+
+
 
 // Protection des routes
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -111,7 +116,7 @@ function App() {
           {/* ✅ Doctor */}
           <Route element={<ProtectedRoute allowedRoles={['doctor']} />}>
             <Route element={<DoctorLayout />}>
-              <Route path="/docteur" element={<NewPatientPage />} />
+              <Route path="/docteur" element={<NewPrescription />} />
             </Route>
           </Route>
 

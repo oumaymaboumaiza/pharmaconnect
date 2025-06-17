@@ -1,31 +1,33 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const adminController = require('../controllers/adminController');
+const adminController = require("../controllers/adminController");
+const doctorController = require("../controllers/doctorController");
+const supplierController = require("../controllers/supplierController");
 
-// Pharmacy
-router.post('/pharmacies', adminController.addPharmacy);
-router.get('/pharmacies', adminController.getAllPharmacies);
-router.delete('/pharmacies/:id', adminController.deletePharmacy);
-router.put('/pharmacies/:id/deactivate', adminController.deactivatePharmacy);
-router.get('/pharmacies/:id', adminController.getPharmacyDetails);
-router.get('/pharmacies', adminController.getAllPharmacies);
+// ===== PHARMACY ROUTES =====
+router.post("/pharmacies", adminController.addPharmacy);
+router.get("/pharmacies", adminController.getAllPharmacies);
+router.delete("/pharmacies/:id", adminController.deletePharmacy);
+router.put("/pharmacies/:id/status", adminController.togglePharmacyStatus); // ✅ CORRIGÉ
+router.get("/pharmacies/:id", adminController.getPharmacyDetails);
 
+// ===== DOCTOR ROUTES =====
+router.post("/doctors", doctorController.createDoctor); // ✅ CORRIGÉ
+router.get("/doctors", doctorController.getAllDoctors); // ✅ AJOUTÉ
+router.delete("/doctors/:id", doctorController.deleteDoctor); // ✅ CORRIGÉ
+router.put("/doctors/:id/status", doctorController.toggleDoctorStatus); // ✅ CORRIGÉ
+router.get("/doctors/:id", doctorController.getProfile); // ✅ CORRIGÉ
 
-// Doctor
-router.post('/doctors', adminController.addDoctor);
-router.delete('/doctors/:id', adminController.deleteDoctor);
-router.put('/doctors/:id/deactivate', adminController.deactivateDoctor);
-router.get('/doctors/:id', adminController.getDoctorDetails);
+// ===== SUPPLIER ROUTES =====
+router.post("/suppliers", supplierController.createSupplier); // ✅ AJOUTÉ
+router.get("/suppliers", supplierController.getAllSuppliers); // ✅ AJOUTÉ
+router.delete("/suppliers/:id", supplierController.deleteSupplier); // ✅ CORRIGÉ
+router.put("/suppliers/:id/status", supplierController.toggleStatus); // ✅ CORRIGÉ (unifié activate/deactivate)
+router.get("/suppliers/:id", supplierController.getSupplier); // ✅ CORRIGÉ
 
-// Supplier
-router.delete('/suppliers/:id', adminController.deleteSupplier);
-router.put('/suppliers/:id/activate', adminController.activateSupplier);
-router.put('/suppliers/:id/deactivate', adminController.deactivateSupplier);
-router.get('/suppliers/:id', adminController.getSupplierDetails);
-
-//admin profile
-router.get('/:id', adminController.getAdminProfile);
-router.put('/:id', adminController.updateAdminProfile);
-router.put('/:id/change-password', adminController.changeAdminPassword);
+// ===== ADMIN PROFILE ROUTES =====
+router.get("/:id", adminController.getAdminProfile);
+router.put("/:id", adminController.updateAdminProfile);
+router.put("/:id/change-password", adminController.changeAdminPassword);
 
 module.exports = router;

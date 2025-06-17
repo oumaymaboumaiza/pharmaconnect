@@ -38,6 +38,7 @@ const SidebarPharmacist = ({ isOpen }) => {
     >
       <div className="h-full flex flex-col">
         <div className="h-16 flex items-center justify-center border-b border-gray-200">
+           <h2 className="text-xl font-semibold text-gray-700">Pharmacist Panel</h2>
           {/* Logo ou titre ici si besoin */}
         </div>
 

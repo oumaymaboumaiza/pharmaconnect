@@ -1,15 +1,21 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { User, FileText, Settings } from 'lucide-react';
+import { 
+  Store, 
+  Package, 
+  Settings 
+} from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { User } from "lucide-react"; 
 
 const NavItem = ({ to, icon, label }) => {
   return (
     <NavLink
       to={to}
-      className={({ isActive }) =>
+      className={({ isActive }) => 
         `flex items-center py-2 px-4 rounded-md transition-colors ${
-          isActive
-            ? 'bg-blue-100 text-blue-600'
+          isActive 
+            ? 'bg-blue-100 text-blue-600' 
             : 'text-gray-600 hover:bg-gray-100'
         }`
       }
@@ -20,7 +26,10 @@ const NavItem = ({ to, icon, label }) => {
   );
 };
 
-const SidebarDoctor = ({ isOpen }) => {
+const SidebarAdmin = ({ isOpen }) => {
+  const { user } = useAuth();
+  const role = user?.role || 'STAFF';
+
   return (
     <aside 
       className={`fixed inset-y-0 left-0 z-10 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
@@ -29,20 +38,27 @@ const SidebarDoctor = ({ isOpen }) => {
     >
       <div className="h-full flex flex-col">
         <div className="h-16 flex items-center justify-center border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-700">Doctor Panel</h2>
+          {/* Logo ou titre ici */}
         </div>
-
+        
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          <NavItem to="/doctor/patients" icon={<User size={20} />} label="Patients" />
-          <NavItem to="/doctor/prescriptions" icon={<FileText size={20} />} label="Prescriptions" />
-        </nav>
 
+          {['admin'].includes(role) && (
+            <>
+              <NavItem to="/pharmacies" icon={<Store size={20} />} label="Pharmacies" />
+              <NavItem to="/admin/doctors" icon={<User size={20} />} label="Doctors" />
+              <NavItem to="/admin/suppliers" icon={<Package size={20} />} label="Suppliers" />
+            </>
+          )}
+
+        </nav>
+        
         <div className="p-4 border-t border-gray-200">
-          <NavItem to="/doctor/settings" icon={<Settings size={20} />} label="Settings" />
+          <NavItem to="/settings" icon={<Settings size={20} />} label="Settings" />
         </div>
       </div>
     </aside>
   );
 };
 
-export default SidebarDoctor;
+export default SidebarAdmin;
