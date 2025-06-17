@@ -3,6 +3,7 @@ const router = express.Router();
 const pharmacyController = require('../controllers/pharmacyController');
 const userController = require('../controllers/userController');
 
+
 // Use consistent admin verification middleware
 const verifyAdmin = userController.verifyAdmin; 
 
