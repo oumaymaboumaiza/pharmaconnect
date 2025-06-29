@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { User, Settings } from 'lucide-react';
+import { User, Settings, FileText } from 'lucide-react'; // Ajout de FileText pour l'icône
 
 const NavItem = ({ to, icon, label }) => {
   return (
@@ -35,6 +35,7 @@ const SidebarDoctor = ({ isOpen }) => {
         <nav className="flex-1 overflow-y-auto py-4 px-3">
           <div className="space-y-1">
             <NavItem to="/doctor/patients" icon={<User size={20} />} label="Patients" />
+            <NavItem to="/docteur/ordonnances" icon={<FileText size={20} />} label="Ordonnances" />
           </div>
         </nav>
 

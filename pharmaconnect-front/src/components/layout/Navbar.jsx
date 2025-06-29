@@ -37,17 +37,6 @@ const Navbar = ({ onToggleSidebar }) => {
           
           <div className="flex items-center space-x-4">
             <div className="relative">
-              <button 
-                className="p-1 rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none"
-                aria-label="Notifications"
-              >
-                <Bell size={20} />
-                {notificationCount > 0 && (
-                  <span className="absolute top-0 right-0 block h-5 w-5 rounded-full bg-red-500 text-white text-xs font-medium flex items-center justify-center transform -translate-y-1/2 translate-x-1/2">
-                    {notificationCount}
-                  </span>
-                )}
-              </button>
             </div>
             
             <div className="relative">

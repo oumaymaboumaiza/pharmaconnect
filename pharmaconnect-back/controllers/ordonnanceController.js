@@ -59,3 +59,33 @@ exports.getOrdonnanceById = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+exports.updateOrdonnance = async (req, res) => {
+  const { id } = req.params;
+  const { nom, prenom, cin, ordonnance } = req.body;
+
+  console.log("🔧 Données reçues pour mise à jour :", { id, nom, prenom, cin, ordonnance });
+
+  try {
+    const [result] = await db.execute(
+      "UPDATE ordonnances SET nom = ?, prenom = ?, cin = ?, ordonnance = ? WHERE id = ?",
+      [nom, prenom, cin, ordonnance, id]
+    );
+    res.json({ message: "Ordonnance mise à jour avec succès" });
+  } catch (error) {
+    console.error("❌ Erreur lors de la mise à jour :", error);
+    res.status(500).json({ error: "Erreur lors de la mise à jour" });
+  }
+};
+
+exports.deleteOrdonnance = async (req, res) => {
+  const { id } = req.params;
+  try {
+    await db.execute('DELETE FROM ordonnances WHERE id = ?', [id]);
+    res.json({ message: 'Ordonnance supprimée avec succès' });
+  } catch (error) {
+    console.error('Erreur lors de la suppression :', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+

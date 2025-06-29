@@ -3,6 +3,8 @@ const router = express.Router();
 const adminController = require("../controllers/adminController");
 const doctorController = require("../controllers/doctorController");
 const supplierController = require("../controllers/supplierController");
+console.log('doctorController.createDoctor = ', doctorController.createDoctor);
+
 
 // ===== PHARMACY ROUTES =====
 router.post("/pharmacies", adminController.addPharmacy);
@@ -19,7 +21,7 @@ router.put("/doctors/:id/status", doctorController.toggleDoctorStatus); // ✅ C
 router.get("/doctors/:id", doctorController.getProfile); // ✅ CORRIGÉ
 
 // ===== SUPPLIER ROUTES =====
-router.post("/suppliers", supplierController.createSupplier); // ✅ AJOUTÉ
+router.post("/suppliers", supplierController.createSupplier); // ✅ AJOUTÉ2
 router.get("/suppliers", supplierController.getAllSuppliers); // ✅ AJOUTÉ
 router.delete("/suppliers/:id", supplierController.deleteSupplier); // ✅ CORRIGÉ
 router.put("/suppliers/:id/status", supplierController.toggleStatus); // ✅ CORRIGÉ (unifié activate/deactivate)

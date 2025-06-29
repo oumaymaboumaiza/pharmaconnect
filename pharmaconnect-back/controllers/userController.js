@@ -6,26 +6,26 @@ const jwt = require('jsonwebtoken');
 // Cette fonction peut être appelée par d'autres contrôleurs (doctorController, supplierController, etc.)
 exports.createAndSaveUser = async (email, password, role) => {
   if (!email || !password || !role) {
-    // Plutôt que de renvoyer une réponse HTTP ici, nous lançons une erreur
-    // que le contrôleur appelant pourra attraper.
     throw new Error('All fields (email, password, role) are required for user creation');
   }
 
   try {
-    // Vérifier si l'utilisateur existe déjà (optionnel mais recommandé ici pour éviter les doublons)
     const [existingUsers] = await db.execute('SELECT id FROM users WHERE email = ?', [email]);
     if (existingUsers.length > 0) {
       throw new Error('User with this email already exists');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const sql = 'INSERT INTO users (email, password, role) VALUES (?, ?, ?)';
-    await db.execute(sql, [email, hashedPassword, role]);
+    await db.execute('INSERT INTO users (email, password, role) VALUES (?, ?, ?)', [
+      email,
+      hashedPassword,
+      role,
+    ]);
+
     return { success: true, message: 'User account created successfully' };
   } catch (err) {
     console.error('Error in createAndSaveUser:', err);
-    // Relancer l'erreur pour que le contrôleur appelant puisse la gérer
-    throw err; 
+    throw err;
   }
 };
 
@@ -97,3 +97,7 @@ exports.verifyAdmin = (req, res, next) => {
     res.status(403).json({ message: 'Accès refusé : administrateur uniquement' });
   }
 };
+
+
+
+

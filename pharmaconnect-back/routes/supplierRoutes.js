@@ -1,13 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const supplierController = require('../controllers/supplierController');
+const tt = require('../controllers/supplierController');
 
 // Routes pour les fournisseurs
-router.post('/', supplierController.createSupplier);          // Créer un fournisseur
-router.get('/', supplierController.getAllSuppliers);         // Lister tous les fournisseurs
-router.get('/:id', supplierController.getSupplier);          // Obtenir un fournisseur
-router.put('/:id', supplierController.updateSupplier);       // Mettre à jour un fournisseur
-router.put('/:id/status', supplierController.toggleStatus);  // Changer le statut
-router.delete('/:id', supplierController.deleteSupplier);    // Supprimer un fournisseur
+router.post('/', tt.createSupplier);
+router.get('/', tt.getAllSuppliers);
+router.get('/:id', tt.getSupplier);
+router.put('/:id', tt.updateSupplier);
+router.put('/:id/status', tt.toggleStatus);
+router.delete('/:id', tt.deleteSupplier);
+router.get('/:id/pharmacies', tt.getPharmaciesBySupplierId); // ✅ corrigé ici
+router.post('/:supplierId/pharmacies/:pharmacyId', tt.addPharmacyToSupplier);
+router.get('/suppliers/:supplierId/pharmacies', tt.getPharmaciesWithDemandes);
 
 module.exports = router;

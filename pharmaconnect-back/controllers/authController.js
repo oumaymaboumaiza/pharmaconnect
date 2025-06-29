@@ -24,14 +24,18 @@ exports.login = async (req, res) => {
       expiresIn: '1h',
     });
 
-    res.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      token,
-    });
+   res.json({
+  user: {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    nom: user.nom,
+    prenom: user.prenom,
+    specialite: user.specialite
+  },
+  token,
+});
+
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Internal server error' });

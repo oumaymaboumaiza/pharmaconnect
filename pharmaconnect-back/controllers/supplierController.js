@@ -35,7 +35,7 @@ const validateSupplierData = (data) => {
 };
 
 // Create new supplier
-exports.createSupplier = async (req, res) => {
+const createSupplier = async (req, res) => {
   const connection = await db.getConnection();
 
   try {
@@ -122,7 +122,7 @@ exports.createSupplier = async (req, res) => {
 };
 
 // Get all suppliers - ✅ CORRECTION: Retourne un array directement
-exports.getAllSuppliers = async (req, res) => {
+const getAllSuppliers = async (req, res) => {
   try {
     console.log("🔍 Récupération des suppliers...");
     const [suppliers] = await db.execute(
@@ -144,7 +144,7 @@ exports.getAllSuppliers = async (req, res) => {
 };
 
 // Get single supplier
-exports.getSupplier = async (req, res) => {
+const getSupplier = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -172,7 +172,7 @@ exports.getSupplier = async (req, res) => {
 };
 
 // Update supplier
-exports.updateSupplier = async (req, res) => {
+const updateSupplier = async (req, res) => {
   const connection = await db.getConnection();
 
   try {
@@ -249,7 +249,7 @@ exports.updateSupplier = async (req, res) => {
 };
 
 // Toggle supplier status
-exports.toggleStatus = async (req, res) => {
+const toggleStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { active } = req.body;
@@ -292,7 +292,7 @@ exports.toggleStatus = async (req, res) => {
 };
 
 // Delete supplier
-exports.deleteSupplier = async (req, res) => {
+const deleteSupplier = async (req, res) => {
   const connection = await db.getConnection();
 
   try {
@@ -340,7 +340,7 @@ exports.deleteSupplier = async (req, res) => {
 };
 
 // Change supplier password
-exports.changePassword = async (req, res) => {
+const changePassword = async (req, res) => {
   const connection = await db.getConnection();
 
   try {
@@ -417,7 +417,7 @@ exports.changePassword = async (req, res) => {
 };
 
 // Get suppliers by status - ✅ CORRECTION: Retourne un array directement
-exports.getSuppliersByStatus = async (req, res) => {
+const getSuppliersByStatus = async (req, res) => {
   try {
     const { status } = req.params; // 'active' or 'inactive'
     const isActive = status === "active" ? 1 : 0;
@@ -439,4 +439,186 @@ exports.getSuppliersByStatus = async (req, res) => {
       details: error.message,
     });
   }
+};
+
+// Nouvelle fonction pour récupérer les pharmacies partenaires d'un fournisseur
+const getSupplierPharmacies = async (req, res) => {
+  const supplierId = req.params.id;
+
+  try {
+    const [pharmacies] = await db.execute(
+      `SELECT
+         p.id_pharmacie AS pharmacy_id,
+         p.nom_pharmacie,
+         p.email AS pharmacy_email,
+         p.telephone AS pharmacy_phone,
+         p.president_pharmacie
+       FROM
+         pharmacie p
+       JOIN
+         supplier_pharmacie sp ON p.id_pharmacie = sp.pharmacie_id
+       WHERE
+         sp.supplier_id = ?`,
+      [supplierId]
+    );
+
+    if (pharmacies.length === 0) {
+      return res.status(404).json({ message: "Aucune pharmacie partenaire trouvée pour ce fournisseur." });
+    }
+
+    res.status(200).json({ success: true, pharmacies });
+
+  } catch (error) {
+    console.error("Erreur lors de la récupération des pharmacies partenaires:", error);
+    res.status(500).json({ error: "Erreur serveur lors de la récupération des pharmacies partenaires." });
+  }
+};
+const addPharmacyToSupplier = async (req, res) => {
+  const { supplierId, pharmacyId } = req.params;
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [existing] = await connection.execute(
+      "SELECT * FROM supplier_pharmacie WHERE supplier_id = ? AND pharmacie_id = ?",
+      [supplierId, pharmacyId]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ error: "Relation déjà existante." });
+    }
+
+    await connection.execute(
+      "INSERT INTO supplier_pharmacie (supplier_id, pharmacie_id) VALUES (?, ?)",
+      [supplierId, pharmacyId]
+    );
+
+    await connection.commit();
+    res.status(201).json({ message: "Relation créée avec succès" });
+  } catch (error) {
+    await connection.rollback();
+    console.error("Erreur ajout relation :", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  } finally {
+    connection.release();
+  }
+};
+
+const getPharmaciesBySupplier = async (req, res) => {
+  const supplierId = req.params.id;
+
+  try {
+    const [pharmacies] = await db.execute(`
+      SELECT 
+        p.id AS pharmacy_id,
+        p.nom AS nom_pharmacie,
+        p.email AS pharmacy_email,
+        p.telephone AS pharmacy_phone,
+        p.president AS president_pharmacie
+      FROM pharmacies p
+      JOIN supplier_pharmacie sp ON p.id = sp.id_pharmacie
+      WHERE sp.id_supplier = ?
+    `, [supplierId]);
+
+    // 🔁 Pour chaque pharmacie, récupérer les médicaments demandés
+    for (let pharmacy of pharmacies) {
+      const [medicaments] = await db.execute(`
+        SELECT nom, quantite FROM medicaments_stock WHERE id_pharmacy = ?
+      `, [pharmacy.pharmacy_id]);
+
+      pharmacy.medicaments_demandes = medicaments;
+    }
+
+    res.json({ success: true, pharmacies });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: 'Erreur serveur' });
+  }
+};
+
+const getPharmaciesWithDemandes = async (req, res) => {
+  const supplierId = req.params.supplierId;
+
+  try {
+    const [rows] = await db.execute(`
+      SELECT 
+        p.id AS pharmacy_id,
+        p.nom AS nom_pharmacie,
+        p.email AS pharmacy_email,
+        p.telephone AS pharmacy_phone,
+        p.president AS president_pharmacie,
+        m.nom AS nom_medicament,
+        d.quantite
+      FROM pharmacies p
+      JOIN demandes d ON p.id = d.pharmacy_id
+      JOIN medicaments_stock m ON d.medicament_id = m.id
+      WHERE d.supplier_id = ?
+    `, [supplierId]);
+
+    // Regrouper par pharmacie
+    const grouped = {};
+
+    rows.forEach(row => {
+      if (!grouped[row.pharmacy_id]) {
+        grouped[row.pharmacy_id] = {
+          pharmacy_id: row.pharmacy_id,
+          nom_pharmacie: row.nom_pharmacie,
+          pharmacy_email: row.pharmacy_email,
+          pharmacy_phone: row.pharmacy_phone,
+          president_pharmacie: row.president_pharmacie,
+          medicaments_demandes: [],
+        };
+      }
+
+      if (row.nom_medicament) {
+        grouped[row.pharmacy_id].medicaments_demandes.push({
+          nom: row.nom_medicament,
+          quantite: row.quantite,
+        });
+      }
+    });
+
+    res.json({ success: true, pharmacies: Object.values(grouped) });
+
+  } catch (error) {
+    console.error("Erreur SQL :", error);
+    res.status(500).json({ success: false, error: "Erreur serveur" });
+  }
+};
+
+const getPharmaciesBySupplierId = async (req, res) => {
+  const supplierId = req.params.id;
+  try {
+    const [pharmacies] = await db.execute(
+      `SELECT p.id_pharmacie, p.nom, p.telephone, p.president
+       FROM supplier_pharmacie sp
+       JOIN pharmacie p ON sp.pharmacie_id = p.id_pharmacie
+       WHERE sp.supplier_id = ?`,
+      [supplierId]
+    );
+
+    res.status(200).json({ success: true, pharmacies });
+  } catch (error) {
+    console.error("Erreur récupération pharmacies :", error);
+    res.status(500).json({ success: false, error: "Erreur serveur" });
+  }
+};
+
+
+
+module.exports = {
+  createSupplier,
+  getAllSuppliers ,
+  getSupplier ,
+  updateSupplier ,
+  toggleStatus ,
+  deleteSupplier ,
+  changePassword ,
+  getSuppliersByStatus ,
+  getSupplierPharmacies ,
+  addPharmacyToSupplier ,
+  getPharmaciesBySupplier,
+  getPharmaciesBySupplierId,
+  getPharmaciesWithDemandes, // Nouvelle fonction exportée
 };

@@ -55,6 +55,7 @@ exports.getProfile = async (req, res) => {
       success: true,
       doctor: rows[0],
     });
+
   } catch (error) {
     console.error("Error fetching doctor profile:", error);
     res.status(500).json({
@@ -67,7 +68,6 @@ exports.getProfile = async (req, res) => {
 // Create new doctor
 exports.createDoctor = async (req, res) => {
   const connection = await db.getConnection();
-
   try {
     await connection.beginTransaction();
 
@@ -84,6 +84,7 @@ exports.createDoctor = async (req, res) => {
       "SELECT id FROM doctors WHERE email = ?",
       [email],
     );
+
     if (existingDoctors.length > 0) {
       return res
         .status(400)
@@ -95,6 +96,7 @@ exports.createDoctor = async (req, res) => {
       "SELECT id FROM doctors WHERE cin = ?",
       [cin],
     );
+
     if (existingCIN.length > 0) {
       return res
         .status(400)
@@ -154,6 +156,7 @@ exports.createDoctor = async (req, res) => {
       message: "Médecin créé avec succès",
       doctor: newDoctor[0],
     });
+
   } catch (error) {
     await connection.rollback();
     console.error("Database insert error:", error);
@@ -180,6 +183,7 @@ exports.getAllDoctors = async (req, res) => {
       count: rows.length,
       doctors: rows || [],
     });
+
   } catch (error) {
     console.error("Fetch error:", error);
     res.status(500).json({
@@ -189,10 +193,102 @@ exports.getAllDoctors = async (req, res) => {
   }
 };
 
+// Update doctor (for frontend edit functionality)
+exports.updateDoctor = async (req, res) => {
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const { id } = req.params;
+    const { firstName, lastName, email, cin, specialty } = req.body;
+
+    // Basic validation
+    if (!firstName || !lastName || !email || !cin || !specialty) {
+      return res.status(400).json({ error: "Tous les champs sont obligatoires" });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Format d'email invalide" });
+    }
+
+    // Check if doctor exists
+    const [doctorExists] = await connection.execute(
+      "SELECT id, email FROM doctors WHERE id = ?",
+      [id]
+    );
+
+    if (doctorExists.length === 0) {
+      return res.status(404).json({ error: "Médecin non trouvé" });
+    }
+
+    // Check if email exists for other doctors
+    const [existingDoctors] = await connection.execute(
+      "SELECT id FROM doctors WHERE email = ? AND id != ?",
+      [email, id]
+    );
+
+    if (existingDoctors.length > 0) {
+      return res.status(400).json({ error: "Un médecin avec cet email existe déjà" });
+    }
+
+    // Check if CIN exists for other doctors
+    const [existingCIN] = await connection.execute(
+      "SELECT id FROM doctors WHERE cin = ? AND id != ?",
+      [cin, id]
+    );
+
+    if (existingCIN.length > 0) {
+      return res.status(400).json({ error: "Un médecin avec ce CIN existe déjà" });
+    }
+
+    const oldEmail = doctorExists[0].email;
+
+    // Update doctor
+    await connection.execute(
+      `UPDATE doctors SET prenom = ?, nom = ?, email = ?, cin = ?, specialty = ? 
+       WHERE id = ?`,
+      [firstName, lastName, email, cin, specialty, id]
+    );
+
+    // Update user email if changed
+    if (email && email !== oldEmail) {
+      await connection.execute(
+        "UPDATE users SET email = ? WHERE email = ? AND role = ?",
+        [email, oldEmail, "doctor"]
+      );
+    }
+
+    // Get updated doctor
+    const [updatedDoctor] = await connection.execute(
+      `SELECT id, nom, prenom, email, cin, specialty, is_active, created_at 
+       FROM doctors WHERE id = ?`,
+      [id]
+    );
+
+    await connection.commit();
+
+    res.json({
+      message: "Médecin modifié avec succès",
+      doctor: updatedDoctor[0]
+    });
+
+  } catch (error) {
+    await connection.rollback();
+    console.error("Update error:", error);
+    res.status(500).json({
+      error: "Erreur lors de la modification",
+      details: error.message
+    });
+  } finally {
+    connection.release();
+  }
+};
+
 // Update doctor profile
 exports.updateProfile = async (req, res) => {
   const connection = await db.getConnection();
-
   try {
     await connection.beginTransaction();
 
@@ -217,6 +313,7 @@ exports.updateProfile = async (req, res) => {
       "SELECT id, email FROM doctors WHERE id = ?",
       [id],
     );
+
     if (doctorExists.length === 0) {
       return res.status(404).json({ error: "Médecin non trouvé" });
     }
@@ -226,6 +323,7 @@ exports.updateProfile = async (req, res) => {
       "SELECT id FROM doctors WHERE email = ? AND id != ?",
       [email, id],
     );
+
     if (existingDoctors.length > 0) {
       return res
         .status(400)
@@ -237,6 +335,7 @@ exports.updateProfile = async (req, res) => {
       "SELECT id FROM doctors WHERE cin = ? AND id != ?",
       [cin, id],
     );
+
     if (existingCIN.length > 0) {
       return res
         .status(400)
@@ -273,6 +372,7 @@ exports.updateProfile = async (req, res) => {
       message: "Profil du médecin mis à jour avec succès",
       doctor: updatedDoctor[0],
     });
+
   } catch (error) {
     await connection.rollback();
     console.error("Update error:", error);
@@ -288,7 +388,6 @@ exports.updateProfile = async (req, res) => {
 // Change doctor password
 exports.changePassword = async (req, res) => {
   const connection = await db.getConnection();
-
   try {
     await connection.beginTransaction();
 
@@ -319,6 +418,7 @@ exports.changePassword = async (req, res) => {
       "SELECT email, password FROM doctors WHERE id = ?",
       [id],
     );
+
     if (rows.length === 0) {
       return res.status(404).json({ error: "Médecin non trouvé" });
     }
@@ -350,6 +450,7 @@ exports.changePassword = async (req, res) => {
       message: "Mot de passe mis à jour avec succès",
       doctor_id: id,
     });
+
   } catch (error) {
     await connection.rollback();
     console.error("Password change error:", error);
@@ -365,7 +466,6 @@ exports.changePassword = async (req, res) => {
 // Delete doctor
 exports.deleteDoctor = async (req, res) => {
   const connection = await db.getConnection();
-
   try {
     await connection.beginTransaction();
 
@@ -376,6 +476,7 @@ exports.deleteDoctor = async (req, res) => {
       "SELECT id, email FROM doctors WHERE id = ?",
       [id],
     );
+
     if (doctor.length === 0) {
       return res.status(404).json({ error: "Médecin non trouvé" });
     }
@@ -397,6 +498,7 @@ exports.deleteDoctor = async (req, res) => {
       message: "Médecin et compte utilisateur supprimés avec succès",
       deleted_doctor_id: id,
     });
+
   } catch (error) {
     await connection.rollback();
     console.error("Delete error:", error);
@@ -426,6 +528,7 @@ exports.toggleDoctorStatus = async (req, res) => {
     const [doctor] = await db.execute("SELECT id FROM doctors WHERE id = ?", [
       id,
     ]);
+
     if (doctor.length === 0) {
       return res.status(404).json({ error: "Médecin non trouvé" });
     }
@@ -447,6 +550,7 @@ exports.toggleDoctorStatus = async (req, res) => {
       message: `Médecin ${active ? "activé" : "désactivé"} avec succès`,
       doctor: updatedDoctor[0],
     });
+
   } catch (error) {
     console.error("Status update error:", error);
     res.status(500).json({
@@ -475,6 +579,7 @@ exports.getDoctorsBySpecialty = async (req, res) => {
       count: rows.length,
       doctors: rows,
     });
+
   } catch (error) {
     console.error("Error fetching doctors by specialty:", error);
     res.status(500).json({
@@ -500,6 +605,7 @@ exports.getSpecialties = async (req, res) => {
       count: rows.length,
       specialties: rows,
     });
+
   } catch (error) {
     console.error("Error fetching specialties:", error);
     res.status(500).json({

@@ -9,21 +9,22 @@ import LoginPage from './pages/auth/LoginPage';
 import DashboardPage from './pages/pharmacist/DashboardPage';
 
 // Pages Admin
-import PharmacyListPage from './pages/admin/PharmacyListPage';
-import NewPharmacyPage from './pages/admin/NewPharmacyPage';
-import SupplierPage from './pages/admin/SupplierPage';
+import PharmacyManagementPage  from './pages/admin/PharmacyManagementPage';
+import DashboardAdminPage from './pages/admin/DashboardAdminPage'; 
 import DocteurPage from './pages/admin/DocteurPage'; // gestion des docteurs par l'admin
 
 // Pages Pharmacien
 import OrdonnancesPage from './pages/pharmacist/OrdonnancesPage';
-import StocksPage from './pages/pharmacist/StocksPage';
+import Demandes from './pages/pharmacist/Demandes';
 import PharmacistSupplierPage from './pages/pharmacist/PharmacistSupplierPage';
 
 // Pages Docteur
-import NewPrescription from "./pages/doctor/NewPrescription"; // Création de nouveaux patients par le docteur
+import NewPrescription from "./pages/doctor/NewPrescription"; 
+import DoctorsOrdonnancesPage from "./pages/doctor/DoctorsOrdonnancesPage"; 
 
 // Pages Fournisseur
 import PharmaciesListPage from './pages/supplier/PharmaciesListPage'; 
+import NotificationsPage from './pages/supplier/NotificationsPage';
 
 // import SupplierMainPage from './components/layout/SupplierMainPage'; // Supprimé
 
@@ -89,9 +90,8 @@ function App() {
           {/* ✅ Admin */}
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
             <Route element={<AdminLayout />}>
-              <Route path="/pharmacies" element={<PharmacyListPage />} />
-              <Route path="/new-pharmacy" element={<NewPharmacyPage />} />
-              <Route path="/admin/suppliers" element={<SupplierPage />} />
+              <Route path="/pharmacies" element={<PharmacyManagementPage />} />
+              <Route path="/admin/dashboard" element={<DashboardAdminPage />} />
               <Route path="/admin/doctors" element={<DocteurPage />} />
             </Route>
           </Route>
@@ -101,8 +101,8 @@ function App() {
             <Route element={<PharmacistLayout />}>
               <Route path="/pharmacy/dashboard" element={<DashboardPage />} />
               <Route path="/pharmacy/ordonnances" element={<OrdonnancesPage />} />
-              <Route path="/pharmacy/stocks" element={<StocksPage />} />
               <Route path="/pharmacy/supplier" element={<PharmacistSupplierPage />} />
+              <Route path="/pharmacy/demandes" element={<Demandes />} />
             </Route>
           </Route>
 
@@ -110,6 +110,8 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={['supplier']} />}>
             <Route element={<SupplierLayout />}>
               <Route path="/supplier" element={<PharmaciesListPage />} />
+              <Route path="/supplier/notifications" element={<NotificationsPage />} />
+
             </Route>
           </Route>
 
@@ -117,7 +119,9 @@ function App() {
           <Route element={<ProtectedRoute allowedRoles={['doctor']} />}>
             <Route element={<DoctorLayout />}>
               <Route path="/docteur" element={<NewPrescription />} />
+              <Route path="/docteur/ordonnances" element={<DoctorsOrdonnancesPage />} />
             </Route>
+
           </Route>
 
           {/* ✅ Routes partagées (sans dashboard) */}
