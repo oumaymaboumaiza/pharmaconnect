@@ -1,60 +1,64 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { Bell, CheckCircle, XCircle, Clock, Package, MessageSquare, Store, Building } from "lucide-react"
 
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [updatingStatus, setUpdatingStatus] = useState(null)
 
-  // Exemple d'ID fournisseur à remplacer par celui du fournisseur connecté
-  const fournisseurId = 3
-
-  // Récupération des notifications du fournisseur
+  // Simulation du chargement avec données statiques
   useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        setLoading(true)
-        const res = await fetch(`http://localhost:5000/api/notifications/fournisseur/${fournisseurId}`)
-        const data = await res.json()
+    const loadNotifications = () => {
+      setLoading(true)
 
-        if (res.ok) {
-          setNotifications(data)
-          setError(null)
-        } else {
-          setError(data.error || "Erreur lors de la récupération")
-        }
-      } catch (err) {
-        setError("Erreur serveur lors de la récupération")
-        console.error(err)
-      } finally {
+      // Données statiques des demandes de médicaments - seulement Ibnou Sina
+      const staticNotifications = [
+        {
+          id: 1,
+          nom_medicament: "Paracétamol",
+          quantite: 50,
+          status: "en_attente",
+          nom_pharmacie: "Pharmacie Ibnou Sina",
+          president_pharmacie: "Dr Omaya",
+          message: "Stock critique, besoin urgent de réapprovisionnement",
+          created_at: "2024-01-15T10:30:00Z",
+        },
+        {
+          id: 4,
+          nom_medicament: "Aspirine",
+          quantite: 30,
+          status: "refusee",
+          nom_pharmacie: "Pharmacie Ibnou Sina",
+          president_pharmacie: "Dr Omaya",
+          message: "Stock insuffisant chez le fournisseur",
+          created_at: "2024-01-12T16:45:00Z",
+        },
+      ]
+
+      setTimeout(() => {
+        setNotifications(staticNotifications)
         setLoading(false)
-      }
+      }, 1000) // Simulation d'un délai de chargement
     }
 
-    fetchNotifications()
-  }, [fournisseurId])
+    loadNotifications()
+  }, [])
 
-  // Mise à jour du statut d'une notification
+  // Mise à jour du statut d'une notification (simulation)
   const updateStatus = async (id, status) => {
-    try {
-      const res = await fetch(`http://localhost:5000/api/notifications/update-status/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      })
+    setUpdatingStatus(id)
 
-      if (res.ok) {
-        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, status } : n)))
-      } else {
-        const data = await res.json()
-        alert(data.error || "Erreur lors de la mise à jour du statut")
-      }
-    } catch (error) {
-      console.error("Erreur mise à jour statut :", error)
-      alert("Erreur serveur lors de la mise à jour du statut")
-    }
+    // Simulation d'un délai de traitement
+    setTimeout(() => {
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, status } : n)))
+      setUpdatingStatus(null)
+
+      // Message de confirmation
+      const statusText = status === "acceptee" ? "acceptée" : "refusée"
+      alert(`La demande a été ${statusText} avec succès.`)
+    }, 1000)
   }
 
   const getStatusIcon = (status) => {
@@ -102,23 +106,14 @@ const NotificationsPage = () => {
               <Bell className="w-8 h-8" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold">Notifications</h1>
+              <h1 className="text-4xl font-bold">Demandes de Réapprovisionnement</h1>
+              <p className="text-blue-100 text-lg">Gérez les demandes des pharmacies</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Messages d'état */}
-        {error && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-400 rounded-lg shadow-md">
-            <div className="flex items-center">
-              <XCircle className="w-5 h-5 text-red-400 mr-3" />
-              <p className="text-red-800 font-medium">Erreur: {error}</p>
-            </div>
-          </div>
-        )}
-
         {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/20">
@@ -128,7 +123,7 @@ const NotificationsPage = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">{notifications.length}</p>
-                <p className="text-gray-600">Total notifications</p>
+                <p className="text-gray-600">Total demandes</p>
               </div>
             </div>
           </div>
@@ -166,13 +161,13 @@ const NotificationsPage = () => {
         {loading ? (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20 text-center">
             <div className="animate-spin w-8 h-8 border-4 border-[#1D10FA] border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-600">Chargement des notifications...</p>
+            <p className="text-gray-600">Chargement des demandes...</p>
           </div>
         ) : notifications.length === 0 ? (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20 text-center">
             <Bell className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">Aucune notification</h3>
-            <p className="text-gray-500">Vous n'avez aucune notification pour le moment.</p>
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">Aucune demande</h3>
+            <p className="text-gray-500">Vous n'avez aucune demande pour le moment.</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -187,11 +182,10 @@ const NotificationsPage = () => {
                       <Package className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-800">{notif.nom_medicament || notif.nom}</h3>
-                      <p className="text-sm text-gray-600">Notification #{notif.id}</p>
+                      <h3 className="text-lg font-bold text-gray-800">{notif.nom_medicament}</h3>
+                      <p className="text-sm text-gray-600">Demande #{notif.id}</p>
                     </div>
                   </div>
-
                   <div
                     className={`flex items-center gap-2 px-3 py-1 rounded-full border ${getStatusColor(notif.status)}`}
                   >
@@ -200,34 +194,33 @@ const NotificationsPage = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div className="flex items-center gap-2 text-gray-600">
                     <Package className="w-4 h-4" />
                     <span>
                       <strong>Quantité:</strong> {notif.quantite}
                     </span>
                   </div>
-
-                  {/* Affichage du nom de la pharmacie au lieu de l'ID */}
                   <div className="flex items-center gap-2 text-gray-600">
                     <Store className="w-4 h-4" />
                     <span>
-                      <strong>Pharmacie:</strong> {notif.nom_pharmacie || "Pharmacie inconnue"}
+                      <strong>Pharmacie:</strong> {notif.nom_pharmacie}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Building className="w-4 h-4" />
+                    <span>
+                      <strong>Président:</strong> {notif.president_pharmacie}
                     </span>
                   </div>
                 </div>
 
-                {/* Affichage du président de la pharmacie si disponible */}
-                {notif.president_pharmacie && (
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Building className="w-4 h-4" />
-                      <span>
-                        <strong>Président:</strong> {notif.president_pharmacie}
-                      </span>
-                    </div>
-                  </div>
-                )}
+                <div className="flex items-center gap-2 text-gray-600 mb-4">
+                  <Clock className="w-4 h-4" />
+                  <span>
+                    <strong>Demandé le:</strong> {new Date(notif.created_at).toLocaleDateString("fr-FR")}
+                  </span>
+                </div>
 
                 {notif.message && (
                   <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 mb-4 border border-gray-200">
@@ -245,17 +238,27 @@ const NotificationsPage = () => {
                   <div className="flex gap-3 pt-4 border-t border-gray-200">
                     <button
                       onClick={() => updateStatus(notif.id, "acceptee")}
-                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200"
+                      disabled={updatingStatus === notif.id}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 disabled:opacity-50"
                     >
-                      <CheckCircle className="w-4 h-4" />
-                      Accepter
+                      {updatingStatus === notif.id ? (
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4" />
+                      )}
+                      {updatingStatus === notif.id ? "Traitement..." : "Accepter"}
                     </button>
                     <button
                       onClick={() => updateStatus(notif.id, "refusee")}
-                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200"
+                      disabled={updatingStatus === notif.id}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 disabled:opacity-50"
                     >
-                      <XCircle className="w-4 h-4" />
-                      Refuser
+                      {updatingStatus === notif.id ? (
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                      ) : (
+                        <XCircle className="w-4 h-4" />
+                      )}
+                      {updatingStatus === notif.id ? "Traitement..." : "Refuser"}
                     </button>
                   </div>
                 )}

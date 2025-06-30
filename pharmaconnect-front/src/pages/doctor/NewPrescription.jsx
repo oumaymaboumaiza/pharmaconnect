@@ -101,7 +101,6 @@ const NewPrescription = () => {
               </div>
               <div>
                 <h1 className="text-4xl font-bold">Nouvelle Prescription</h1>
-                <p className="text-blue-100 text-lg">Créez une nouvelle ordonnance pour votre patient</p>
               </div>
             </div>
 

@@ -121,7 +121,6 @@ const OrdonnancesPage = () => {
             </div>
             <div>
               <h1 className="text-4xl font-bold">Gestion des Ordonnances</h1>
-              <p className="text-blue-100 text-lg">Gérez les prescriptions médicales en attente</p>
             </div>
           </div>
 
@@ -262,7 +261,7 @@ const OrdonnancesPage = () => {
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1D10FA] to-purple-600 text-white hover:shadow-lg rounded-lg font-medium transition-all duration-200 disabled:opacity-50"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-                Actualiser
+                Rechercher
               </button>
             </div>
           </div>

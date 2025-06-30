@@ -1,14 +1,35 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import axios from "axios"
-import { Package, Search, Eye, Minus, Send, X, Plus, AlertCircle } from "lucide-react"
+import {
+  Package,
+  Search,
+  Eye,
+  Minus,
+  Send,
+  X,
+  Plus,
+  AlertCircle,
+  CheckCircle,
+  User,
+  TrendingUp,
+  Calendar,
+  Clock,
+  Truck,
+  Mail,
+  Phone,
+  XCircle,
+} from "lucide-react"
 
-export default function DashboardPage() {
+const DashboardImproved = () => {
+  // États pour les médicaments
   const [medicaments, setMedicaments] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedMed, setSelectedMed] = useState(null)
+  const [activeTab, setActiveTab] = useState("medicaments")
+  const [message, setMessage] = useState("")
+  const [formError, setFormError] = useState("")
 
   // États pour le popup de demande
   const [showDemandePopup, setShowDemandePopup] = useState(false)
@@ -17,28 +38,205 @@ export default function DashboardPage() {
   const [popupLoading, setPopupLoading] = useState(false)
   const [popupError, setPopupError] = useState("")
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/medicaments")
-        const dataWithStatus = res.data.map((m) => ({
-          ...m,
-          status: m.quantite <= 50 ? "critical" : "normal",
-          currentStock: m.quantite,
-          maxStock: 500,
-          expiryDate: new Date(2025, 6, 15),
-        }))
+  // États pour les demandes (données statiques)
+  const [demandes, setDemandes] = useState([])
+  const [demandesStats, setDemandesStats] = useState({})
+  const [demandesLoading, setDemandesLoading] = useState(false)
+  const [updatingStatus, setUpdatingStatus] = useState(null)
 
-        setMedicaments(dataWithStatus)
-      } catch (error) {
-        console.error("Erreur lors du chargement du stock :", error)
-      } finally {
-        setLoading(false)
-      }
+  useEffect(() => {
+    loadStaticData()
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === "demandes") {
+      loadStaticDemandes()
+    }
+  }, [activeTab])
+
+  const loadStaticData = () => {
+    setLoading(true)
+
+    // Données statiques des médicaments
+    const staticMedicaments = [
+      {
+        id: 1,
+        nom: "Paracétamol",
+        quantite: 25,
+        prix: 2.5,
+        status: "critical",
+        currentStock: 25,
+        maxStock: 500,
+        expiryDate: new Date(2025, 6, 15),
+      },
+      {
+        id: 2,
+        nom: "Amoxicilline",
+        quantite: 150,
+        prix: 8.75,
+        status: "normal",
+        currentStock: 150,
+        maxStock: 500,
+        expiryDate: new Date(2025, 8, 20),
+      },
+      {
+        id: 3,
+        nom: "Ibuprofène",
+        quantite: 80,
+        prix: 3.2,
+        status: "normal",
+        currentStock: 80,
+        maxStock: 500,
+        expiryDate: new Date(2025, 5, 10),
+      },
+      {
+        id: 4,
+        nom: "Aspirine",
+        quantite: 30,
+        prix: 1.8,
+        status: "critical",
+        currentStock: 30,
+        maxStock: 500,
+        expiryDate: new Date(2025, 7, 25),
+      },
+    ]
+
+    setTimeout(() => {
+      setMedicaments(staticMedicaments)
+      setLoading(false)
+    }, 1000)
+  }
+
+  const loadStaticDemandes = () => {
+    setDemandesLoading(true)
+
+    // Données statiques des demandes - seulement 2 demandes
+    const staticDemandes = [
+      {
+        id: 1,
+        nom_medicament: "Paracétamol",
+        quantite: 50,
+        status: "en_attente",
+        nom_fournisseur: "Pharmacie Ibnou Sina",
+        president_pharmacie: "Dr Omaya",
+        fournisseur_email: "sina@pharmaconnect.com",
+        fournisseur_telephone: "+21652745574",
+        created_at: "2024-01-15T10:30:00Z",
+      },
+      {
+        id: 2,
+        nom_medicament: "Aspirine",
+        quantite: 30,
+        status: "refusee",
+        nom_fournisseur: "Pharmacie Ibnou Sina",
+        president_pharmacie: "Dr Omaya",
+        fournisseur_email: "sina@pharmaconnect.com",
+        fournisseur_telephone: "+21652745574",
+        created_at: "2024-01-12T16:45:00Z",
+      },
+    ]
+
+    const stats = {
+      total: staticDemandes.length,
+      en_attente: staticDemandes.filter((d) => d.status === "en_attente").length,
+      acceptees: staticDemandes.filter((d) => d.status === "acceptee").length,
+      recues: staticDemandes.filter((d) => d.status === "reçue").length,
+      refusees: staticDemandes.filter((d) => d.status === "refusee").length,
     }
 
-    fetchData()
-  }, [])
+    setTimeout(() => {
+      setDemandes(staticDemandes)
+      setDemandesStats(stats)
+      setDemandesLoading(false)
+    }, 1000)
+  }
+
+  const diminuerQuantite = (id, currentQuantite) => {
+    if (currentQuantite <= 0) return
+
+    const nouvelleQuantite = currentQuantite - 1
+    setMedicaments((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, currentStock: nouvelleQuantite, quantite: nouvelleQuantite } : m)),
+    )
+    setMessage("Quantité mise à jour avec succès!")
+    setTimeout(() => setMessage(""), 3000)
+  }
+
+  const ouvrirPopupDemande = (medicament) => {
+    setSelectedMedicamentDemande(medicament)
+    setShowDemandePopup(true)
+    setQuantiteDemande("")
+    setPopupError("")
+  }
+
+  const fermerPopupDemande = () => {
+    setShowDemandePopup(false)
+    setSelectedMedicamentDemande(null)
+    setQuantiteDemande("")
+    setPopupError("")
+  }
+
+  const envoyerDemandeAvecPopup = (e) => {
+    e.preventDefault()
+    if (!quantiteDemande || quantiteDemande <= 0) {
+      setPopupError("Veuillez saisir une quantité valide")
+      return
+    }
+
+    setPopupLoading(true)
+    setPopupError("")
+
+    // Simulation d'envoi de demande
+    setTimeout(() => {
+      const nouvelleDemande = {
+        id: Date.now(),
+        nom_medicament: selectedMedicamentDemande.nom,
+        quantite: Number.parseInt(quantiteDemande),
+        status: "en_attente",
+        nom_fournisseur: "Pharmacie Ibnou Sina",
+        president_pharmacie: "Dr Omaya",
+        fournisseur_email: "sina@pharmaconnect.com",
+        fournisseur_telephone: "+21652745574",
+        created_at: new Date().toISOString(),
+      }
+
+      setDemandes((prev) => [nouvelleDemande, ...prev])
+      setDemandesStats((prev) => ({
+        ...prev,
+        total: prev.total + 1,
+        en_attente: prev.en_attente + 1,
+      }))
+
+      fermerPopupDemande()
+      setMessage("Demande envoyée avec succès !")
+      setTimeout(() => setMessage(""), 3000)
+      setPopupLoading(false)
+    }, 2000)
+  }
+
+  const updateDemandeStatus = (demandeId, newStatus) => {
+    setUpdatingStatus(demandeId)
+
+    // Simulation de mise à jour
+    setTimeout(() => {
+      setDemandes((prev) => prev.map((d) => (d.id === demandeId ? { ...d, status: newStatus } : d)))
+
+      // Recalculer les stats
+      const updatedDemandes = demandes.map((d) => (d.id === demandeId ? { ...d, status: newStatus } : d))
+      const newStats = {
+        total: updatedDemandes.length,
+        en_attente: updatedDemandes.filter((d) => d.status === "en_attente").length,
+        acceptees: updatedDemandes.filter((d) => d.status === "acceptee").length,
+        recues: updatedDemandes.filter((d) => d.status === "reçue").length,
+        refusees: updatedDemandes.filter((d) => d.status === "refusee").length,
+      }
+      setDemandesStats(newStats)
+
+      setMessage("Statut mis à jour avec succès!")
+      setTimeout(() => setMessage(""), 3000)
+      setUpdatingStatus(null)
+    }, 1000)
+  }
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -51,77 +249,77 @@ export default function DashboardPage() {
     }
   }
 
-  const diminuerQuantite = async (id, currentQuantite) => {
-    if (currentQuantite <= 0) return
-
-    try {
-      const nouvelleQuantite = currentQuantite - 1
-      await axios.put(`http://localhost:5000/api/medicaments/${id}/quantite`, {
-        quantite: nouvelleQuantite,
-      })
-
-      setMedicaments((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, currentStock: nouvelleQuantite, quantite: nouvelleQuantite } : m)),
-      )
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour de la quantité", error)
+  const getDemandeStatusIcon = (status) => {
+    switch (status) {
+      case "en_attente":
+        return <Clock className="w-5 h-5 text-orange-500" />
+      case "acceptee":
+        return <CheckCircle className="w-5 h-5 text-green-500" />
+      case "reçue":
+        return <Truck className="w-5 h-5 text-blue-500" />
+      case "refusee":
+        return <XCircle className="w-5 h-5 text-red-500" />
+      default:
+        return <AlertCircle className="w-5 h-5 text-gray-500" />
     }
   }
 
-  // Fonction pour ouvrir le popup de demande
-  const ouvrirPopupDemande = (medicament) => {
-    setSelectedMedicamentDemande(medicament)
-    setShowDemandePopup(true)
-    setQuantiteDemande("")
-    setPopupError("")
+  const getDemandeStatusColor = (status) => {
+    switch (status) {
+      case "en_attente":
+        return "bg-orange-100 text-orange-800 border-orange-200"
+      case "acceptee":
+        return "bg-green-100 text-green-800 border-green-200"
+      case "reçue":
+        return "bg-blue-100 text-blue-800 border-blue-200"
+      case "refusee":
+        return "bg-red-100 text-red-800 border-red-200"
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200"
+    }
   }
 
-  // Fonction pour fermer le popup
-  const fermerPopupDemande = () => {
-    setShowDemandePopup(false)
-    setSelectedMedicamentDemande(null)
-    setQuantiteDemande("")
-    setPopupError("")
+  const getDemandeStatusText = (status) => {
+    switch (status) {
+      case "en_attente":
+        return "En attente"
+      case "acceptee":
+        return "Acceptée"
+      case "reçue":
+        return "Reçue"
+      case "refusee":
+        return "Refusée"
+      default:
+        return status
+    }
   }
 
-  // Fonction pour envoyer une demande au fournisseur (avec popup)
-  const envoyerDemandeAvecPopup = async (e) => {
-    e.preventDefault()
+  const StatusButton = ({ status, currentStatus, demandeId, label, icon }) => {
+    const isActive = currentStatus === status
+    const isUpdating = updatingStatus === demandeId
 
-    if (!quantiteDemande || quantiteDemande <= 0) {
-      setPopupError("Veuillez saisir une quantité valide")
-      return
-    }
-
-    setPopupLoading(true)
-    setPopupError("")
-
-    try {
-      const pharmacie_id = localStorage.getItem("userId") || localStorage.getItem("pharmacyId") || 7
-      const supplier_id = 3 // ID fournisseur par défaut
-
-      const response = await axios.post("http://localhost:5000/api/demandes/create", {
-        pharmacie_id: Number.parseInt(pharmacie_id),
-        supplier_id: supplier_id,
-        nom_medicament: selectedMedicamentDemande.nom,
-        quantite: Number.parseInt(quantiteDemande),
-      })
-
-      if (response.data.success) {
-        fermerPopupDemande()
-        alert("Demande envoyée avec succès !")
-      } else {
-        setPopupError(response.data.error || "Erreur lors de l'envoi de la demande")
-      }
-    } catch (error) {
-      console.error("Erreur lors de l'envoi de la demande :", error)
-      setPopupError("Erreur de connexion au serveur")
-    } finally {
-      setPopupLoading(false)
-    }
+    return (
+      <button
+        onClick={() => updateDemandeStatus(demandeId, status)}
+        disabled={isUpdating || isActive}
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+          isActive ? `${getDemandeStatusColor(status)} shadow-md` : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+        } ${isUpdating ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} ${isActive ? "cursor-default" : ""}`}
+      >
+        {isUpdating ? (
+          <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+        ) : (
+          icon
+        )}
+        {isUpdating ? "..." : label}
+      </button>
+    )
   }
 
   const filtered = medicaments.filter((m) => m.nom.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredDemandes = demandes.filter((d) =>
+    `${d.nom_medicament} ${d.nom_fournisseur}`.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
 
   const stats = {
     total: medicaments.length,
@@ -130,136 +328,404 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-8 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-4 mb-4">
-            <Package className="w-8 h-8" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 px-6 py-12">
+      {/* Header Section */}
+      <div className="max-w-7xl mx-auto mb-8">
+        <div className="bg-gradient-to-r from-[#1D10FA] to-purple-600 text-white py-6 px-8 rounded-2xl shadow-lg">
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 p-3 rounded-xl">
+              <Package className="w-8 h-8" />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold">Stock des Médicaments</h1>
-              <p className="text-blue-100">Suivi du stock en pharmacie</p>
+              <h1 className="text-3xl font-bold">Dashboard Pharmacie</h1>
+              <p className="text-blue-100">Gérez vos médicaments et demandes</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-4 grid grid-cols-3 gap-4 -mt-8">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="text-2xl font-bold">{stats.total}</div>
-          <div className="text-gray-600">Total Produits</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="text-2xl font-bold">{stats.normal}</div>
-          <div className="text-gray-600">Stock Normal</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="text-2xl font-bold">{stats.critical}</div>
-          <div className="text-gray-600">Stock Critique</div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-3 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Rechercher..."
-            className="w-full pl-10 pr-4 py-2 border rounded-lg"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        {loading ? (
-          <div className="text-center py-8">Chargement...</div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-8">Aucun médicament trouvé</div>
-        ) : (
-          <div className="space-y-4">
-            {filtered.map((m) => (
-              <div key={m.id} className="bg-white p-4 rounded-lg shadow">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-lg">{m.nom}</h3>
-                  </div>
-                  <span className={`px-2 py-1 rounded-full text-sm ${getStatusColor(m.status)}`}>
-                    {m.status === "normal" ? "Normal" : "Critique"}
-                  </span>
-                </div>
-
-                <div className="mt-4">
-                  <div className="flex justify-between mb-1">
-                    <span>
-                      Stock: {m.currentStock}/{m.maxStock}
-                    </span>
-                    <span>{((m.currentStock / m.maxStock) * 100).toFixed(0)}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${m.status === "critical" ? "bg-red-500" : "bg-green-500"}`}
-                      style={{ width: `${(m.currentStock / m.maxStock) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex justify-between items-center">
-                  <p className="text-sm">Prix : {Number(m.prix).toFixed(2)} TND</p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setSelectedMed(m)}
-                      className="p-2 bg-blue-100 text-blue-600 rounded-lg"
-                      title="Voir détails"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => diminuerQuantite(m.id, m.currentStock)}
-                      disabled={m.currentStock <= 0}
-                      className={`p-2 rounded-lg ${
-                        m.currentStock > 0 ? "bg-red-100 text-red-600" : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      }`}
-                      title="Diminuer quantité"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    {/* Nouveau bouton avec popup */}
-                    <button
-                      onClick={() => ouvrirPopupDemande(m)}
-                      className="px-3 py-2 bg-green-100 text-green-600 rounded-lg font-medium hover:bg-green-200 transition-colors duration-200 flex items-center gap-1"
-                      title="Faire une demande détaillée"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Demander
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+      {/* Stats Cards */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md border border-gray-200">
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-100 p-3 rounded-lg">
+              <Package className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.total}</p>
+              <p className="text-gray-600">Total Médicaments</p>
+            </div>
           </div>
-        )}
+        </div>
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md border border-gray-200">
+          <div className="flex items-center gap-4">
+            <div className="bg-green-100 p-3 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.normal}</p>
+              <p className="text-gray-600">Stock Normal</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md border border-gray-200">
+          <div className="flex items-center gap-4">
+            <div className="bg-red-100 p-3 rounded-lg">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.critical}</p>
+              <p className="text-gray-600">Stock Critique</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md border border-gray-200">
+          <div className="flex items-center gap-4">
+            <div className="bg-orange-100 p-3 rounded-lg">
+              <Clock className="w-6 h-6 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{demandesStats.en_attente || 0}</p>
+              <p className="text-gray-600">Demandes en attente</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Modal détails médicament (existant) */}
+      {/* Tab Navigation */}
+      <div className="max-w-7xl mx-auto mb-8">
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-2 shadow-md border border-gray-200 inline-flex">
+          <button
+            onClick={() => setActiveTab("medicaments")}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 ${
+              activeTab === "medicaments"
+                ? "bg-gradient-to-r from-[#1D10FA] to-purple-600 text-white shadow-lg"
+                : "text-gray-600 hover:text-gray-800 hover:bg-white/50"
+            }`}
+          >
+            <Package className="w-5 h-5" />
+            Stock Médicaments
+          </button>
+          <button
+            onClick={() => setActiveTab("demandes")}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 ${
+              activeTab === "demandes"
+                ? "bg-gradient-to-r from-[#1D10FA] to-purple-600 text-white shadow-lg"
+                : "text-gray-600 hover:text-gray-800 hover:bg-white/50"
+            }`}
+          >
+            <Send className="w-5 h-5" />
+            Mes Demandes
+          </button>
+        </div>
+      </div>
+
+      {/* Messages */}
+      {message && (
+        <div className="max-w-7xl mx-auto mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-lg shadow-md animate-fade-in">
+          <div className="flex items-center">
+            <CheckCircle className="w-5 h-5 text-green-400 mr-3" />
+            <p className="text-green-800 font-medium">{message}</p>
+          </div>
+        </div>
+      )}
+
+      {formError && (
+        <div className="max-w-7xl mx-auto mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-lg shadow-md animate-fade-in">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-400 mr-3" />
+            <p className="text-red-800 font-medium">{formError}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Content */}
+      {activeTab === "medicaments" ? (
+        <div className="max-w-7xl mx-auto">
+          {/* Search Bar */}
+          <div className="mb-6">
+            <div className="relative max-w-md">
+              <input
+                type="text"
+                placeholder="Rechercher un médicament..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-3 pl-12 border-2 border-gray-200 focus:border-[#1D10FA] rounded-xl bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-gray-200">
+              <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-gray-600">Chargement des médicaments...</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-gray-200">
+              <div className="bg-gray-100 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                <Package className="w-12 h-12 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">Aucun médicament trouvé</h3>
+              <p className="text-gray-500">
+                {searchTerm ? "Essayez avec d'autres termes de recherche" : "Aucun médicament en stock"}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((m) => (
+                <div
+                  key={m.id}
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
+                >
+                  {/* Card Header */}
+                  <div className="bg-gradient-to-r from-[#1D10FA] to-purple-600 p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="bg-white/20 p-3 rounded-full">
+                          <Package className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-bold">{m.nom}</h2>
+                          <p className="text-blue-100 text-sm">Médicament</p>
+                        </div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium bg-white/20 border border-white/30`}>
+                        {m.status === "normal" ? "Normal" : "Critique"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="p-6">
+                    <div className="space-y-4 mb-6">
+                      <div className="flex justify-between items-center text-sm text-gray-600">
+                        <span>
+                          Stock: {m.currentStock}/{m.maxStock}
+                        </span>
+                        <span className="font-medium">{((m.currentStock / m.maxStock) * 100).toFixed(0)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${m.status === "critical" ? "bg-red-500" : "bg-green-500"}`}
+                          style={{ width: `${(m.currentStock / m.maxStock) * 100}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-600">
+                        <TrendingUp className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm">
+                          <strong>Prix:</strong> {Number(m.prix).toFixed(2)} TND
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setSelectedMed(m)}
+                        className="flex-1 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 text-sm font-medium rounded-lg transition-all duration-200 py-2 px-3 flex items-center justify-center gap-2"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Détails
+                      </button>
+                      <button
+                        onClick={() => diminuerQuantite(m.id, m.currentStock)}
+                        disabled={m.currentStock <= 0}
+                        className={`flex-1 text-sm font-medium rounded-lg transition-all duration-200 py-2 px-3 flex items-center justify-center gap-2 ${
+                          m.currentStock > 0
+                            ? "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100"
+                            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        }`}
+                      >
+                        <Minus className="w-4 h-4" />
+                        Diminuer
+                      </button>
+                      <button
+                        onClick={() => ouvrirPopupDemande(m)}
+                        className="flex-1 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 text-sm font-medium rounded-lg transition-all duration-200 py-2 px-3 flex items-center justify-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Demander
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto">
+          {/* Search Bar */}
+          <div className="mb-6">
+            <div className="relative max-w-md">
+              <input
+                type="text"
+                placeholder="Rechercher une demande..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-3 pl-12 border-2 border-gray-200 focus:border-[#1D10FA] rounded-xl bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            </div>
+          </div>
+
+          {demandesLoading ? (
+            <div className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-gray-200">
+              <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-gray-600">Chargement des demandes...</p>
+            </div>
+          ) : filteredDemandes.length === 0 ? (
+            <div className="text-center py-16 bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-gray-200">
+              <div className="bg-gray-100 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                <Send className="w-12 h-12 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">Aucune demande trouvée</h3>
+              <p className="text-gray-500">
+                {searchTerm
+                  ? "Essayez avec d'autres termes de recherche"
+                  : "Vous n'avez envoyé aucune demande pour le moment."}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {filteredDemandes.map((demande) => (
+                <div
+                  key={demande.id}
+                  className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
+                >
+                  {/* Card Header */}
+                  <div className="bg-gradient-to-r from-[#1D10FA] to-purple-600 p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="bg-white/20 p-3 rounded-full">
+                          <Package className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-bold">{demande.nom_medicament}</h2>
+                          <p className="text-blue-100 text-sm">Demande #{demande.id}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-1 rounded-full border bg-white/20 border-white/30">
+                        {getDemandeStatusIcon(demande.status)}
+                        <span className="text-sm font-medium text-white">{getDemandeStatusText(demande.status)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="flex items-center gap-3 text-gray-600">
+                        <TrendingUp className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm">
+                          <strong>Quantité:</strong> {demande.quantite}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-600">
+                        <User className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm">
+                          <strong>Fournisseur:</strong> {demande.nom_fournisseur || "Non spécifié"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-gray-600">
+                        <Calendar className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm">
+                          <strong>Demandé le:</strong> {new Date(demande.created_at).toLocaleDateString("fr-FR")}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Informations du fournisseur */}
+                    {demande.nom_fournisseur && demande.nom_fournisseur !== "Non spécifié" && (
+                      <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 mb-6 border border-gray-200">
+                        <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          Informations du fournisseur
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                          {demande.fournisseur_email && (
+                            <div className="flex items-center gap-2">
+                              <Mail className="w-4 h-4" />
+                              <span>{demande.fournisseur_email}</span>
+                            </div>
+                          )}
+                          {demande.fournisseur_telephone && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="w-4 h-4" />
+                              <span>{demande.fournisseur_telephone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-3">
+                      <StatusButton
+                        status="en_attente"
+                        currentStatus={demande.status}
+                        demandeId={demande.id}
+                        label="En attente"
+                        icon={<Clock className="w-4 h-4" />}
+                      />
+                      <StatusButton
+                        status="reçue"
+                        currentStatus={demande.status}
+                        demandeId={demande.id}
+                        label="Reçue"
+                        icon={<Truck className="w-4 h-4" />}
+                      />
+                      <StatusButton
+                        status="refusee"
+                        currentStatus={demande.status}
+                        demandeId={demande.id}
+                        label="Refusée"
+                        icon={<XCircle className="w-4 h-4" />}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Modal détails médicament */}
       {selectedMed && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-40">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="p-4 border-b flex justify-between">
-              <h3 className="font-bold text-lg">{selectedMed.nom}</h3>
-              <button onClick={() => setSelectedMed(null)}>✕</button>
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+            <div className="bg-gradient-to-r from-[#1D10FA] to-purple-600 text-white p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold">{selectedMed.nom}</h3>
+                <button
+                  onClick={() => setSelectedMed(null)}
+                  className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors duration-200"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
-            <div className="p-4 space-y-4">
-              <p>
-                <strong>Quantité:</strong> {selectedMed.currentStock}
-              </p>
-              <p>
-                <strong>Prix:</strong> {Number(selectedMed.prix).toFixed(2)} TND
-              </p>
-              <p>
-                <strong>Date d'expiration:</strong> {selectedMed.expiryDate.toLocaleDateString()}
-              </p>
+            <div className="p-6 space-y-4">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Quantité:</span>
+                <span className="font-medium">{selectedMed.currentStock}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Prix:</span>
+                <span className="font-medium">{Number(selectedMed.prix).toFixed(2)} TND</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Date d'expiration:</span>
+                <span className="font-medium">{selectedMed.expiryDate.toLocaleDateString()}</span>
+              </div>
             </div>
-            <div className="p-4 border-t flex justify-end">
-              <button className="px-4 py-2 bg-gray-200 rounded-lg" onClick={() => setSelectedMed(null)}>
+            <div className="p-6 border-t flex justify-end">
+              <button
+                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                onClick={() => setSelectedMed(null)}
+              >
                 Fermer
               </button>
             </div>
@@ -267,7 +733,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* POPUP DE DEMANDE SIMPLIFIÉ (SANS FOURNISSEUR) */}
+      {/* POPUP DE DEMANDE */}
       {showDemandePopup && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100">
@@ -394,6 +860,24 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+      `}</style>
     </div>
   )
 }
+
+export default DashboardImproved

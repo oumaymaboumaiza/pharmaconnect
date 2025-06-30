@@ -77,7 +77,7 @@ const SidebarPharmacist = ({ isOpen }) => {
                 <NavItem to="/pharmacy/dashboard" icon={<Home size={20} />} label="Tableau de Bord" />
                 <NavItem to="/pharmacy/ordonnances" icon={<FileText size={20} />} label="Ordonnances" />
                  <NavItem to="/pharmacy/supplier" icon={<Package size={20} />} label="Fournisseurs" />
-                 <NavItem to="/pharmacy/demandes" icon={<FileText size={20} />} label="Demandes" />
+                
               </div>
             </div>
           </nav>

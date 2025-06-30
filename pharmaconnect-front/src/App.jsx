@@ -15,7 +15,7 @@ import DocteurPage from './pages/admin/DocteurPage'; // gestion des docteurs par
 
 // Pages Pharmacien
 import OrdonnancesPage from './pages/pharmacist/OrdonnancesPage';
-import Demandes from './pages/pharmacist/Demandes';
+
 import PharmacistSupplierPage from './pages/pharmacist/PharmacistSupplierPage';
 
 // Pages Docteur
@@ -102,7 +102,6 @@ function App() {
               <Route path="/pharmacy/dashboard" element={<DashboardPage />} />
               <Route path="/pharmacy/ordonnances" element={<OrdonnancesPage />} />
               <Route path="/pharmacy/supplier" element={<PharmacistSupplierPage />} />
-              <Route path="/pharmacy/demandes" element={<Demandes />} />
             </Route>
           </Route>
 
